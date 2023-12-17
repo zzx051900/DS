@@ -3,13 +3,20 @@
 #include<stdlib.h>
 #include<time.h>
 
-#define MAXSIZE 10	//ÏßĞÔ±í³õÊ¼·ÖÅäÁ¿
+#define MAXSIZE 10000	//ÏßĞÔ±í³õÊ¼·ÖÅäÁ¿
 #define OK 1	//³É¹¦±êÖ¾
 #define  ERROR 0	//Ê§°Ü±êÖ¾
 
 typedef int Status;	//Status ÊÇº¯ÊıµÄÀàĞÍ£¬ÆäÖµÊÇº¯Êı½á¹û×´Ì¬´úÂë
 typedef int ElemType;	//ElemTypeµÄÀàĞÍ¸ù¾İÊµ¼ÊÇé¿ö¶ø¶¨£¬ÕâÀï¼Ù¶¨Îªint
 typedef int KeyType; //Éè¹Ø¼ü×ÖÎªÕûĞÍ
+
+int q_a = 0;	//¿ìËÙÅÅĞò±È½Ï´ÎÊı
+int q_b = 0;	//¿ìËÙÅÅĞòÒÆ¶¯´ÎÊı
+int h_a = 0;	//¶ÑÅÅĞò±È½Ï´ÎÊı
+int h_b = 0;	//¶ÑÅÅĞòÒÆ¶¯´ÎÊı
+int m_a = 0;	//¹é²¢ÅÅĞò±È½Ï´ÎÊı
+int m_b = 0;	//¹é²¢ÅÅĞòÒÆ¶¯´ÎÊı
 
 typedef struct //¶¨ÒåÃ¿¸ö¼ÇÂ¼£¨Êı¾İÔªËØ£©µÄ½á¹¹
 {
@@ -25,6 +32,8 @@ typedef struct
 
 //º¯ÊıÉùÃ÷
 Status InitList_Sq(SqList *L);	//Ë³Ğò±íµÄ³õÊ¼»¯
+Status S_ChangeList_Sq(SqList* L);
+Status N_ChangeList_Sq(SqList* L);
 void bubble_sort(SqList* L);	//Ã°ÅİÅÅĞò
 void SelectSort(SqList* L);		//¼òµ¥Ñ¡ÔñÅÅĞò
 void InserSort(SqList* L);		//Ö±½Ó²åÈëÅÅĞò
@@ -32,8 +41,10 @@ void QSort(SqList* L, int low, int high);//¿ìËÙÅÅĞò£¨µİ¹é£©
 int Partition(SqList* L, int low, int high);
 void HeapSort(SqList* L);	//¶ÑÅÅĞò
 void HeapAdjust(SqList* L, int s, int m);	//¶Ñµ÷Õû
-int min_(int x, int y);
 void merge_sort(SqList* L);
+void merge(SqList* L, RedType a[], int left, int mid, int right);
+void msort(SqList* L, RedType a[], int left, int right);
+
 void print_Sq(SqList L);	//Êä³öË³Ğò±í
 
 
@@ -47,114 +58,122 @@ int main()
 
 	InitList_Sq(&L);
 
-	// ´ò¿ªÎÄ¼ş²¢Ğ´ÈëÊı¾İ
+	//Ğ´ÈëÎÄ¼ş
 	fp1 = fopen("data1.dat", "wb");
-	fwrite(L.r, sizeof(RedType), MAXSIZE, fp1);
+	fwrite(L.r, sizeof(RedType), MAXSIZE+1, fp1);
 	fclose(fp1);
-
+	for (int i = 1; i <= MAXSIZE; i++)
+	{
+		L.r[i].key = 0;
+	}
 	//²âÊÔÃ°ÅİÅÅĞò
 	fp1 = fopen("data1.dat", "rb");
-	fread(L.r, sizeof(RedType), MAXSIZE, fp1);
+	fread(L.r, sizeof(RedType), MAXSIZE+1, fp1);
 	fclose(fp1);
 
 	start = clock();     //¿ªÊ¼
-	printf("Ã°ÅİÅÅĞòÇ°£º\n");
-	print_Sq(L);  //´òÓ¡½á¹û
+	//printf("Ã°ÅİÅÅĞòÇ°£º\n");
+	//print_Sq(L);  //´òÓ¡½á¹û
 
 	bubble_sort(&L);
-	printf("Ã°ÅİÅÅĞòºó£º\n");
-	print_Sq(L);  //´òÓ¡½á¹û
-
-	finish = clock();    //½áÊø
-	t = (double)(finish - start) / CLOCKS_PER_SEC;//¼ÆËãÔËĞĞÊ±¼ä
-	printf("time = %lfms\n\n", t * 1000);//Êä³öÔËĞĞÊ±¼ä
-
-	//²âÊÔ¼òµ¥Ñ¡ÔñÅÅĞò
-	fp1 = fopen("data1.dat", "rb");
-	fread(L.r, sizeof(RedType), MAXSIZE, fp1);
-	fclose(fp1);
-
-	start = clock();     //¿ªÊ¼
-	printf("¼òµ¥Ñ¡ÔñÅÅĞòÇ°£º\n");
-	print_Sq(L);  //´òÓ¡½á¹û
-
-	SelectSort(&L);
-	printf("¼òµ¥Ñ¡ÔñÅÅĞòºó£º\n");
-	print_Sq(L);  //´òÓ¡½á¹û
-
-	finish = clock();    //½áÊø
-	t = (double)(finish - start) / CLOCKS_PER_SEC;//¼ÆËãÔËĞĞÊ±¼ä
-	printf("time = %lfms\n\n", t * 1000);//Êä³öÔËĞĞÊ±¼ä
-
-	//²âÊÔÖ±½Ó²åÈëÅÅĞò
-	fp1 = fopen("data1.dat", "rb");
-	fread(L.r, sizeof(RedType), MAXSIZE, fp1);
-	fclose(fp1);
-
-	start = clock();     //¿ªÊ¼
-	printf("Ö±½Ó²åÈëÅÅĞòÇ°£º\n");
-	print_Sq(L);  //´òÓ¡½á¹û
-
-	InserSort(&L);
-	printf("Ö±½Ó²åÈëÅÅĞòºó£º\n");
-	print_Sq(L);  //´òÓ¡½á¹û
-
-	finish = clock();    //½áÊø
-	t = (double)(finish - start) / CLOCKS_PER_SEC;//¼ÆËãÔËĞĞÊ±¼ä
-	printf("time = %lfms\n\n", t * 1000);//Êä³öÔËĞĞÊ±¼ä
-
-	//²âÊÔ¿ìËÙÅÅĞò
-	fp1 = fopen("data1.dat", "rb");
-	fread(L.r, sizeof(RedType), MAXSIZE, fp1);
-	fclose(fp1);
-
-	start = clock();     //¿ªÊ¼
-	printf("¿ìËÙÅÅĞòÇ°£º\n");
-	print_Sq(L);  //´òÓ¡½á¹û
-
-	QSort(&L, 1, L.length);	
-	printf("¿ìËÙÅÅĞòºó£º\n");
+	//printf("Ã°ÅİÅÅĞòºó£º\n");
 	//print_Sq(L);  //´òÓ¡½á¹û
 
 	finish = clock();    //½áÊø
-	t = (double)(finish - start) / CLOCKS_PER_SEC;//¼ÆËãÔËĞĞÊ±¼ä
-	printf("time = %lfms\n\n", t * 1000);//Êä³öÔËĞĞÊ±¼ä
+	t = (double)(finish - start);//¼ÆËãÔËĞĞÊ±¼ä
+	printf("time = %lfms\n\n", t);//Êä³öÔËĞĞÊ±¼ä
 
-	//²âÊÔ¶ÑÅÅĞò
+	//²âÊÔ¼òµ¥Ñ¡ÔñÅÅĞò
 	fp1 = fopen("data1.dat", "rb");
-	fread(L.r, sizeof(RedType), MAXSIZE, fp1);
+	fread(L.r, sizeof(RedType), MAXSIZE + 1, fp1);
 	fclose(fp1);
 
 	start = clock();     //¿ªÊ¼
-	printf("¶ÑÅÅĞòÇ°£º\n");
-	print_Sq(L);  //´òÓ¡½á¹û
+	//printf("¼òµ¥Ñ¡ÔñÅÅĞòÇ°£º\n");
+	//print_Sq(L);  //´òÓ¡½á¹û
 
-	HeapSort(&L);
-	printf("¶ÑÅÅĞòºó£º\n");
-	print_Sq(L);  //´òÓ¡½á¹û
+	SelectSort(&L);
+	//printf("¼òµ¥Ñ¡ÔñÅÅĞòºó£º\n");
+	//print_Sq(L);  //´òÓ¡½á¹û
 
 	finish = clock();    //½áÊø
-	t = (double)(finish - start) / CLOCKS_PER_SEC;//¼ÆËãÔËĞĞÊ±¼ä
-	printf("time = %lfms\n\n", t * 1000);//Êä³öÔËĞĞÊ±¼ä
+	t = (double)(finish - start);//¼ÆËãÔËĞĞÊ±¼ä
+	printf("time = %lfms\n\n", t);//Êä³öÔËĞĞÊ±¼ä
+
+	//²âÊÔÖ±½Ó²åÈëÅÅĞò
+	fp1 = fopen("data1.dat", "rb");
+	fread(L.r, sizeof(RedType), MAXSIZE + 1, fp1);
+	fclose(fp1);
+
+	start = clock();     //¿ªÊ¼
+	//printf("Ö±½Ó²åÈëÅÅĞòÇ°£º\n");
+	//print_Sq(L);  //´òÓ¡½á¹û
+
+	InserSort(&L);
+	//printf("Ö±½Ó²åÈëÅÅĞòºó£º\n");
+	//print_Sq(L);  //´òÓ¡½á¹û
+
+	finish = clock();    //½áÊø
+	t = (double)(finish - start);//¼ÆËãÔËĞĞÊ±¼ä
+	printf("time = %lfms\n\n", t);//Êä³öÔËĞĞÊ±¼ä
+
+	//²âÊÔ¿ìËÙÅÅĞò£¨Ëæ»ú£©
+	fp1 = fopen("data1.dat", "rb");
+	fread(L.r, sizeof(RedType), MAXSIZE + 1, fp1);
+	fclose(fp1);
+
+	start = clock();     //¿ªÊ¼
+	//printf("Ëæ»ú¿ìËÙÅÅĞòÇ°£º\n");
+	//print_Sq(L);  //´òÓ¡½á¹û
+
+	QSort(&L, 1, L.length);	
+	printf("Ëæ»ú¿ìËÙÅÅĞò±È½Ï´ÎÊıÎª£º%d\n", q_a);
+	printf("Ëæ»ú¿ìËÙÅÅĞòÒÆ¶¯´ÎÊıÎª£º%d\n", q_b);
+	//printf("Ëæ»ú¿ìËÙÅÅĞòºó£º\n");
+	//print_Sq(L);  //´òÓ¡½á¹û
+
+	finish = clock();    //½áÊø
+	t = (double)(finish - start);//¼ÆËãÔËĞĞÊ±¼ä
+	printf("time = %lfms\n\n", t);//Êä³öÔËĞĞÊ±¼ä
+
 	
 	//²âÊÔ¶ÑÅÅĞò
 	fp1 = fopen("data1.dat", "rb");
-	fread(L.r, sizeof(RedType), MAXSIZE, fp1);
+	fread(L.r, sizeof(RedType), MAXSIZE + 1, fp1);
 	fclose(fp1);
 
 	start = clock();     //¿ªÊ¼
-	printf("¹é²¢ÅÅĞòÇ°£º\n");
-	print_Sq(L);  //´òÓ¡½á¹û
+	//printf("¶ÑÅÅĞòÇ°£º\n");
+	//print_Sq(L);  //´òÓ¡½á¹û
 
-	merge_sort(&L);
-	printf("¹é²¢ÅÅĞòºó£º\n");
-	print_Sq(L);  //´òÓ¡½á¹û
+	HeapSort(&L);
+	printf("¶ÑÅÅĞò±È½Ï´ÎÊıÎª£º%d\n", h_a);
+	printf("¶ÑÅÅĞòÒÆ¶¯´ÎÊıÎª£º%d\n", h_b);
+	//printf("¶ÑÅÅĞòºó£º\n");
+	//print_Sq(L);  //´òÓ¡½á¹û
 
 	finish = clock();    //½áÊø
-	t = (double)(finish - start) / CLOCKS_PER_SEC;//¼ÆËãÔËĞĞÊ±¼ä
-	printf("time = %lfms\n\n", t * 1000);//Êä³öÔËĞĞÊ±¼ä
+	t = (double)(finish - start);//¼ÆËãÔËĞĞÊ±¼ä
+	printf("time = %lfms\n\n", t);//Êä³öÔËĞĞÊ±¼ä
+	
+	//²âÊÔ¹é²¢ÅÅĞò
+	fp1 = fopen("data1.dat", "rb");
+	fread(L.r, sizeof(RedType), MAXSIZE + 1, fp1);
+	fclose(fp1);
 
+	start = clock();     //¿ªÊ¼
+	//printf("¹é²¢ÅÅĞòÇ°£º\n");
+	//print_Sq(L);  //´òÓ¡½á¹û
 
+	merge_sort(&L);
+	printf("¹é²¢ÅÅĞò±È½Ï´ÎÊı£º%d\n", m_a);
+	printf("¹é²¢ÅÅĞòÒÆ¶¯´ÎÊı£º%d\n", m_b);
+	//printf("¹é²¢ÅÅĞòºó£º\n");
+	//print_Sq(L);  //´òÓ¡½á¹û
+
+	finish = clock();    //½áÊø
+	t = (double)(finish - start);//¼ÆËãÔËĞĞÊ±¼ä
+	printf("time = %lfms\n\n", t);//Êä³öÔËĞĞÊ±¼ä
 	return 0;
 }
 
@@ -263,20 +282,19 @@ void QSort(SqList* L, int low, int high)
 	}
 }
 
-
 int Partition(SqList* L, int low, int high)
 {
-	KeyType pivotkey;
 	L->r[0] = L->r[low];
-	pivotkey = L->r[low].key;
 	while (low < high)
 	{
-		while (low < high && L->r[high].key >= pivotkey)
+		while (low < high && ++q_a && L->r[high].key >= L->r[0].key)
 			high--;
 		L->r[low] = L->r[high];
-		while (low < high && L->r[low].key <= pivotkey)
+		q_b++;
+		while (low < high && ++q_a && L->r[low].key <= L->r[0].key)
 			low++;
 		L->r[high] = L->r[low];
+		q_b++;
 	}	//½áÊøÊ±£¬lowºÍhigh¶¼Ö¸ÏòÖĞĞÄµãÔªËØÓ¦¸ÃÔÚµÄÎ»ÖÃ
 	L->r[low] = L->r[0];
 	return low;	//·µ»ØÖĞĞÄµãÎ»ÖÃ
@@ -309,6 +327,7 @@ void HeapSort(SqList* L)
 		tmp = L->r[1];
 		L->r[1] = L->r[i];
 		L->r[i] = tmp;
+		h_b += 3;
 		HeapAdjust(L, 1, i - 1); //¶ÔR[1]µ½R[i-1]ÖØĞÂ½¨¶Ñ
 	}
 }
@@ -321,50 +340,96 @@ void HeapAdjust(SqList* L, int s, int m)	//sÎª¶Ñ¶¥ËùÔÚÎ»ÖÃ£¬mÎª×îºóÒ»¸öÔªËØËùÔÚÎ
 	RedType rc = L->r[s];	//±£´æ¶Ñ¶¥ÔªËØ
 	for (j = 2 * s; j <= m; j *= 2) //ÑØkey½Ï´óµÄº¢×ÓÏòÏÂÉ¸Ñ¡
 	{
-		if (j < m && (L->r[j].key < L->r[j + 1].key))
+		if (j < m && ++h_a && (L->r[j].key < L->r[j + 1].key))
 		{
 			j++; //jÎªkey½Ï´óµÄ¼ÇÂ¼µÄÏÂ±ê
 		}
-		if (rc.key >= L->r[j].key)	
+		if (++h_a && rc.key >= L->r[j].key)	
 			break;
 		L->r[s] = L->r[j];
+		++h_b;
 		s = j; //rcÓ¦²åÈëÔÚÎ»ÖÃsÉÏ
 	}
 	L->r[s] = rc; //²åÈë
+	++h_b;
 }
 
-// ¹é²¢ÅÅĞò£¨C-µü´ú°æ£©
-int min_(int x, int y) 
+// ¹é²¢ÅÅĞòÈë¿Ú
+void merge_sort(SqList* L)
 {
-	return x < y ? x : y;
+	RedType* a = (RedType*)malloc((MAXSIZE + 1)*sizeof(RedType));	//·ÖÅäÒ»¸öÍ¬Ñù´óĞ¡µÄ¸¨Öú¿Õ¼ä
+	if (a)	//¸¨ÖúÊı×é·ÖÅä³É¹¦
+	{
+		msort(L, a, 1, L->length);
+		free(a);	//ÊÍ·Å¸¨Öú¿Õ¼ä
+	}
+	else
+	{
+		printf("error:·ÖÅäÊ§°Ü£¡");
+	}
 }
-void merge_sort(SqList* L) {
-	RedType* a = L->r;
-	RedType* b = (RedType*)malloc(L->length * sizeof(RedType));
-	int seg, start;
-	for (seg = 1; seg < L->length; seg += seg) {
-		for (start = 0; start < L->length; start += seg + seg) 
+
+//¹é²¢ÅÅĞò
+void msort(SqList* L, RedType a[], int left, int right)	//Ô­Ë³Ğò±í£¬¸¨ÖúÊı×é£¬×óÏÂ±ê£¬ÓÒÏÂ±ê
+{
+	//Èç¹ûÖ»ÓĞÒ»¸öÔªËØ£¬ÄÇÃ´²»ĞèÒª¼ÌĞø»®·Ö
+	if (left < right)
+	{
+		int mid = (left + right) / 2;	//ÕÒÖĞ¼äµã
+		msort(L, a, left, mid);	//µİ¹é¼ÌĞø»®·Ö£¬×ó°ëÇø
+		msort(L, a, mid + 1, right);	//ÓÒ°ëÇø
+		merge(L, a, left, mid, right);	//µ±Ö»ÓĞÒ»¸öÔªËØµÄÊ±ºò¿ªÊ¼ºÏ²¢
+	}
+}
+
+//ºÏ²¢
+void merge(SqList* L, RedType a[], int left, int mid, int right)
+{
+	//±ê¼ÇË³Ğò±í×ó°ëÇøµÚÒ»¸öÎ´ÅÅĞòµÄÔªËØ
+	int l_pos = left;
+	//±ê¼ÇË³Ğò±í×ó°ëÇøµÚÒ»¸öÎ´ÅÅĞòµÄÔªËØ
+	int r_pos = mid + 1;
+	//ÁÙÊ±Êı×éµÄÏÂ±ê
+	int pos = left;	//ÒòÎªÒ»¸ö¹ı³ÌÄÚĞèÒªºÏ²¢µÄ¾ÍÊÇleftµ½rightÕâÒ»²¿·Ö
+	//ºÏ²¢
+	while (++m_a && l_pos <= mid && ++m_a && r_pos <= right)	//µ±×ó°ëÇøºÍÓÒ°ëÇø¶¼»¹ÓĞÔªËØÊ±
+	{
+		if (++m_a && L->r[l_pos].key < L->r[r_pos].key)	//Èç¹û×ó°ëÇøµÚÒ»¸öÊ£ÓàÔªËØĞ¡ÓÚÓÒ°ëÇøµÚÒ»¸öÔªËØ
 		{
-			int low = start, mid = min_(start + seg, L->length), high = min_(start + seg + seg, L->length);
-			int k = low;
-			int start1 = low, end1 = mid;
-			int start2 = mid, end2 = high;
-			while (start1 < end1 && start2 < end2)
-				b[k++] = a[start1].key < a[start2].key ? a[start1++] : a[start2++];
-			while (start1 < end1)
-				b[k++] = a[start1++];
-			while (start2 < end2)
-				b[k++] = a[start2++];
+			a[pos] = L->r[l_pos];	//½«×ó°ëÇøÔªËØ·Åµ½¸¨ÖúÊı×é
+			pos++;
+			l_pos++;
+			++m_b;
 		}
-		RedType* temp = a;
-		a = b;
-		b = temp;
+		else
+		{
+			a[pos] = L->r[r_pos];	//½«ÓÒ°ëÇøÔªËØ·Åµ½¸¨ÖúÊı×é
+			pos++;
+			r_pos++;
+			++m_b;
+		}
 	}
-	if (a != L->r) {
-		int i;
-		for (i = 0; i < L->length; i++)
-			b[i] = a[i];
-		b = a;
+	//ºÏ²¢×ó°ëÇøÊ£ÓàµÄÔªËØ
+	while (++m_a && l_pos <= mid)
+	{
+		a[pos] = L->r[l_pos];	//½«×ó°ëÇøÔªËØ·Åµ½¸¨ÖúÊı×é
+		pos++;
+		l_pos++;
+		++m_b;
 	}
-	free(b);
+	//ºÏ²¢ÓÒ°ëÇøÊ£ÓàµÄÔªËØ
+	while (++m_a && r_pos <= right)
+	{
+		a[pos] = L->r[r_pos];	//½«×ó°ëÇøÔªËØ·Åµ½¸¨ÖúÊı×é
+		pos++;
+		r_pos++;
+		++m_b;
+	}
+	//°ÑÁÙÊ±Êı×éÖĞºÏ²¢ºóµÄÔªËØ¸´ÖÆ»ØÔ­Êı×é
+	while (left <= right)
+	{
+		L->r[left] = a[left];
+		left++;
+		++m_b;
+	}
 }
